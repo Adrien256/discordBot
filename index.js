@@ -13,6 +13,19 @@ const LOAD_SLASH = process.argv[2] == "load"
 const CLIENT_ID = "980982534965981244"
 const GUILD_ID = "459787057749950485"
 
+var express = require('express');
+var app     = express();
+
+app.set('port', (process.env.PORT || 5000));
+
+//For avoiding Heroku $PORT error
+app.get('/', function(request, response) {
+    var result = 'App is running'
+    response.send(result);
+}).listen(app.get('port'), function() {
+    console.log('App is running, server is listening on port ', app.get('port'));
+});
+
 const client = new Discord.Client({
     intents: [
         "GUILDS",
