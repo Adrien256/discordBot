@@ -1,5 +1,7 @@
 const Discord = require("discord.js")
+const { MessageEmbed } = require("discord.js")
 const dotenv = require("dotenv")
+const axios = require('axios')
 const { REST } = require("@discordjs/rest")
 const { Routes } = require("discord-api-types/v9")
 const fs = require("fs")
@@ -7,6 +9,8 @@ const { Player } = require("discord-player")
 
 dotenv.config()
 const TOKEN = process.env.TOKEN
+const weatherAPI = process.env.weatherAPI
+const command = process.env.command
 
 const LOAD_SLASH = process.argv[2] == "load"
 
@@ -32,7 +36,8 @@ app.get('/', function(request, response) {
 const client = new Discord.Client({
     intents: [
         "GUILDS",
-        "GUILD_VOICE_STATES"
+        "GUILD_VOICE_STATES",
+        "GUILD_MESSAGES"
     ]
 })
 
@@ -72,6 +77,50 @@ else {
     client.on("ready", () => {
         console.log(`Logged in as ${client.user.tag}`)
         client.user.setActivity("Among Us", { type: "PLAYING" });
+    })
+    client.on("messageCreate", (message) => {
+        if (message.content.startsWith(command)) {
+            var args = message.content.slice(command.length).split(' ');
+            var pCommand = args.shift().toLowerCase();
+
+            if (pCommand === "weather"){
+                axios
+                .get(
+                    `https://api.openweathermap.org/data/2.5/weather?q=${args}&units=metric&appid=${weatherAPI}`
+                )
+                .then(response => {
+                    let weatherEmbed = new MessageEmbed()
+                    let current = Math.ceil(response.data.main.temp);
+                    let min = response.data.main.temp_min;
+                    let max = response.data.main.temp_max;
+                    let humidity = response.data.main.humidity;
+                    let weatherCon = response.data.weather[0].description;
+                    let weatherIcon = response.data.weather[0].icon;
+                    let country = response.data.sys.country;
+                    let city = args;
+                    weatherEmbed
+                        .setColor('#0099ff')
+                        .setTitle(`It is ${current}\u00B0 C in ${city}, ${country}`)
+                        .setThumbnail(`http://openweathermap.org/img/w/${weatherIcon}.png`)
+                        .addField('\u200B', '\u200B' )
+                        .addField(`-- Today's high --`, `${max}`, true)
+                        .addField(`-- Today's low --`, `${min}`, true)
+                        .addField(`-- Humidity --`, `${humidity}`, true)
+                        .addField('\u200B', '\u200B' )
+                        .addField(` -- Overall condition -- `, weatherCon, true)
+                        
+                    message.channel.send({
+                        embeds: [weatherEmbed]
+                    });
+                }).catch(err => {
+                    message.reply("Invalid city name");
+                    console.log(err);
+                })
+            }
+        }
+        else{
+            return;
+        }
     })
     client.on("interactionCreate", (interaction) => {
         async function handleCommand() {
