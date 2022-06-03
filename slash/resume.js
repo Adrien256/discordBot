@@ -14,5 +14,5 @@ module.exports = {
             queue.setPaused(false)
             await interaction.editReply("It's not paused?")
         }
-	},
+	}
 }

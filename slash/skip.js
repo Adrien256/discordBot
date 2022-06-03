@@ -11,10 +11,20 @@ module.exports = {
         const currentSong = queue.current
 
 		queue.skip()
-        await interaction.editReply({
-            embeds: [
-                new MessageEmbed().setDescription(`${currentSong.title} has been skipped!`).setThumbnail(currentSong.thumbnail)
-            ]
-        })
-	},
+        if (comingFromLofi === true){
+            await interaction.editReply({
+                embeds: [
+                    new MessageEmbed().setDescription(`Lofi radio terminated`).setThumbnail(currentSong.thumbnail)
+                ]
+            })
+        }
+        else{
+            await interaction.editReply({
+                embeds: [
+                    new MessageEmbed().setDescription(`${currentSong.title} has been skipped!`).setThumbnail(currentSong.thumbnail)
+                ]
+            })
+        }
+        comingFromLofi = false;
+	}
 }

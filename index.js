@@ -13,6 +13,8 @@ const LOAD_SLASH = process.argv[2] == "load"
 const CLIENT_ID = "980982534965981244"
 const GUILD_ID = "459787057749950485"
 
+comingFromLofi = false
+
 var express = require('express');
 var app     = express();
 

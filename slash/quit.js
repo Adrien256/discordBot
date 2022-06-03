@@ -7,7 +7,8 @@ module.exports = {
 
 		if (!queue) return await interaction.editReply("Nothing is being played?")
 
+		comingFromLofi = false;
 		queue.destroy()
         await interaction.editReply(":(")
-	},
+	}
 }

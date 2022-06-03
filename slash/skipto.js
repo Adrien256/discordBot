@@ -13,7 +13,8 @@ module.exports = {
         if (trackNum > queue.tracks.length)
             return await interaction.editReply("Invalid track number")
 		queue.skipTo(trackNum - 1)
+        comingFromLofi = false;
 
         await interaction.editReply(`Skipped ahead to track number ${trackNum}`)
-	},
+	}
 }

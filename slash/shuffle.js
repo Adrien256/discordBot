@@ -8,6 +8,11 @@ module.exports = {
 		if (!queue) return await interaction.editReply("There are no songs in the queue.")
 
 		queue.shuffle()
-        await interaction.editReply(`The queue of ${queue.tracks.length} songs have been shuffled!`)
-	},
+		if (comingFromLofi === true){
+			await interaction.editReply(`A radio station cannot be shuffled.`)
+		}
+		else{
+			await interaction.editReply(`The queue of ${queue.tracks.length} songs have been shuffled!`)
+		}
+	}
 }
