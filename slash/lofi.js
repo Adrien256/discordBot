@@ -5,6 +5,8 @@ const { QueryType } = require("discord-player")
 module.exports = {
 	data: new SlashCommandBuilder().setName("lofi").setDescription("Plays lofi radio - ends current song queue"),
     run: async ({ client, interaction }) => {
+        if (!interaction.member.voice.channel)
+            return interaction.editReply("Go in a voice channel to use this command.")
         const queue2 = await client.player.createQueue(interaction.guild)
         if (!queue2.connection) await queue2.connect(interaction.member.voice.channel)
 

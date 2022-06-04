@@ -15,7 +15,7 @@ const command = process.env.command
 const LOAD_SLASH = process.argv[2] == "load"
 
 const CLIENT_ID = "980982534965981244"
-const GUILD_ID = "459787057749950485"
+const guilds = ["459787057749950485", "934294286403534870"]
 
 comingFromLofi = false
 
@@ -59,19 +59,21 @@ for (const file of slashFiles){
 }
 
 if (LOAD_SLASH) {
-    const rest = new REST({ version: "9" }).setToken(TOKEN)
-    console.log("Deploying slash commands")
-    rest.put(Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID), {body: commands})
-    .then(() => {
-        console.log("Successfully loaded")
-        process.exit(0)
-    })
-    .catch((err) => {
-        if (err){
-            console.log(err)
-            process.exit(1)
-        }
-    })
+    guilds.forEach((ID) => {
+        const rest = new REST({ version: "9" }).setToken(TOKEN)
+        console.log("Deploying slash commands")
+        rest.put(Routes.applicationGuildCommands(CLIENT_ID, ID), {body: commands})
+        .then(() => {
+            console.log("Successfully loaded")
+            process.exit(0)
+        })
+        .catch((err) => {
+            if (err){
+                console.log(err)
+                process.exit(1)
+            }
+        })
+    })  
 }
 else {
     client.on("ready", () => {
