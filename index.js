@@ -5,7 +5,10 @@ const axios = require('axios')
 const { REST } = require("@discordjs/rest")
 const { Routes } = require("discord-api-types/v9")
 const fs = require("fs")
-const { Player } = require("discord-player")
+const voice = require('@discordjs/voice');
+const discordTTS = require('discord-tts');
+const { Player } = require("discord-player");
+const {AudioPlayer, createAudioPlayer, createAudioResource, StreamType, entersState, VoiceConnectionStatus, joinVoiceChannel} = require("@discordjs/voice");
 
 dotenv.config()
 const TOKEN = process.env.TOKEN
@@ -15,29 +18,18 @@ const command = process.env.command
 const LOAD_SLASH = process.argv[2] == "load"
 
 const CLIENT_ID = "980982534965981244"
-const guilds = ["459787057749950485", "934294286403534870"]
+const guilds = ["459787057749950485" , "934294286403534870"]
+
+
 
 comingFromLofi = false
-
-var express = require('express');
-var app     = express();
-
-app.set('port', (process.env.PORT || 5000));
-
-// testing
-//For avoiding Heroku $PORT error
-app.get('/', function(request, response) {
-    var result = 'App is running'
-    response.send(result);
-}).listen(app.get('port'), function() {
-    console.log('App is running, server is listening on port ', app.get('port'));
-});
 
 const client = new Discord.Client({
     intents: [
         "GUILDS",
         "GUILD_VOICE_STATES",
-        "GUILD_MESSAGES"
+        "GUILD_MESSAGES",
+        "GUILD_MEMBERS"
     ]
 })
 
@@ -50,6 +42,9 @@ client.player = new Player(client, {
 })
 
 let commands = []
+var voiceConnection;
+let audioPlayer=new AudioPlayer();
+var firstCreate = true;
 
 const slashFiles = fs.readdirSync("./slash").filter(file => file.endsWith(".js"))
 for (const file of slashFiles){
@@ -80,11 +75,10 @@ else {
         console.log(`Logged in as ${client.user.tag}`)
         client.user.setActivity("Among Us", { type: "PLAYING" });
     })
-    client.on("messageCreate", (message) => {
+    client.on("messageCreate", async (message) => {
         if (message.content.startsWith(command)) {
             var args = message.content.slice(command.length).split(' ');
             var pCommand = args.shift().toLowerCase();
-
             if (pCommand === "weather"){
                 axios
                 .get(
@@ -119,6 +113,53 @@ else {
                     console.log(err);
                 })
             }
+            else if (pCommand === "tts"){
+                {
+                    message.channel.bulkDelete(1)
+                    try{
+                        const queue = await client.player.createQueue(message.guild)
+                        queue.destroy();
+
+                        var voiceBot = message.content.slice(5);
+                        const stream=discordTTS.getVoiceStream(voiceBot);
+                        const audioResource=createAudioResource(stream, {inputType: StreamType.Arbitrary, inlineVolume:true});
+                        
+                        if (firstCreate === true){
+                        if(!voiceConnection || voiceConnection?.status===VoiceConnectionStatus.Disconnected || voiceConnection == null){
+                            voiceConnection = joinVoiceChannel({
+                                channelId: message.member.voice.channelId,
+                                guildId: message.guildId,
+                                adapterCreator: message.guild.voiceAdapterCreator,
+                            });
+                            firstCreate = false;
+                            voiceConnection=await entersState(voiceConnection, VoiceConnectionStatus.Connecting, 1_000);
+                        }
+                    }else{
+                            voiceConnection = joinVoiceChannel({
+                            channelId: message.member.voice.channelId,
+                            guildId: message.guildId,
+                            adapterCreator: message.guild.voiceAdapterCreator,
+                        });
+                    }
+                        if(voiceConnection.status===VoiceConnectionStatus.Connected){
+                            voiceConnection.subscribe(audioPlayer);
+                            audioPlayer.play(audioResource);
+                        } 
+                    }catch (error){
+                        console.log(error);
+                    }
+                }
+            }
+            else if (pCommand === "bulkdeletebig"){
+                message.channel.bulkDelete(99)
+                .then(messages => console.log(`Bulk deleted ${messages.size} messages`))
+                .catch(console.error);
+            }
+            else if (pCommand === "bulkdeletesmall"){
+                message.channel.bulkDelete(5)
+                .then(messages => console.log(`Bulk deleted ${messages.size} messages`))
+                .catch(console.error);
+            }
         }
         else{
             return;
@@ -128,6 +169,11 @@ else {
         async function handleCommand() {
             if (!interaction.isCommand()) return
 
+            try{
+                voiceConnection.destroy();
+            }catch(error){
+                console.log("destroy called on un-initialized voiceConnection");
+            }
             const slashcmd = client.slashcommands.get(interaction.commandName)
             if (!slashcmd) interaction.reply("Not a valid slash command")
 
