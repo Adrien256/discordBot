@@ -121,37 +121,42 @@ else {
                         queue.destroy();
 
                         var voiceBot = message.content.slice(5);
-                        const stream=discordTTS.getVoiceStream(voiceBot);
-                        const audioResource=createAudioResource(stream, {inputType: StreamType.Arbitrary, inlineVolume:true});
-                        
-                        if (firstCreate === true){
-                        if(!voiceConnection || voiceConnection?.status===VoiceConnectionStatus.Disconnected || voiceConnection == null){
-                            voiceConnection = joinVoiceChannel({
-                                channelId: message.member.voice.channelId,
-                                guildId: message.guildId,
-                                adapterCreator: message.guild.voiceAdapterCreator,
-                            });
-                            firstCreate = false;
-                            voiceConnection=await entersState(voiceConnection, VoiceConnectionStatus.Connecting, 1_000);
+                        if (voiceBot.length < 1){
+                            console.log("tts attempted with empty imput");
+                        }else{
+                            const stream=discordTTS.getVoiceStream(voiceBot);
+                            const audioResource=createAudioResource(stream, {inputType: StreamType.Arbitrary, inlineVolume:true});
+
+                            if (firstCreate === true){
+                                if(!voiceConnection || voiceConnection?.status===VoiceConnectionStatus.Disconnected || voiceConnection == null){
+                                    voiceConnection = joinVoiceChannel({
+                                        channelId: message.member.voice.channelId,
+                                        guildId: message.guildId,
+                                        adapterCreator: message.guild.voiceAdapterCreator,
+                                    });
+                                    firstCreate = false;
+                                    voiceConnection=await entersState(voiceConnection, VoiceConnectionStatus.Connecting, 1_000);
+                                }
+                                }else{
+                                    voiceConnection = joinVoiceChannel({
+                                    channelId: message.member.voice.channelId,
+                                    guildId: message.guildId,
+                                    adapterCreator: message.guild.voiceAdapterCreator,
+                                });
+                                }
+                                if(voiceConnection.status===VoiceConnectionStatus.Connected){
+                                    voiceConnection.subscribe(audioPlayer);
+                                    audioPlayer.play(audioResource);
+                                } 
+                                
                         }
-                    }else{
-                            voiceConnection = joinVoiceChannel({
-                            channelId: message.member.voice.channelId,
-                            guildId: message.guildId,
-                            adapterCreator: message.guild.voiceAdapterCreator,
-                        });
-                    }
-                        if(voiceConnection.status===VoiceConnectionStatus.Connected){
-                            voiceConnection.subscribe(audioPlayer);
-                            audioPlayer.play(audioResource);
-                        } 
                     }catch (error){
                         console.log(error);
                     }
                 }
             }
             else if (pCommand === "bulkdeletebig"){
-                message.channel.bulkDelete(99)
+                message.channel.bulkDelete(25)
                 .then(messages => console.log(`Bulk deleted ${messages.size} messages`))
                 .catch(console.error);
             }
@@ -171,17 +176,20 @@ else {
 
             try{
                 voiceConnection.destroy();
-            }catch(error){
-                console.log("destroy called on un-initialized voiceConnection");
-            }
+            }catch{}
+
             const slashcmd = client.slashcommands.get(interaction.commandName)
             if (!slashcmd) interaction.reply("Not a valid slash command")
 
             await interaction.deferReply()
             await slashcmd.run({ client, interaction })
+
         }
-        handleCommand()
+        try{
+            handleCommand()
+        }catch (error){
+            console.log("handlecommand failure");
+        }  
     })
     client.login(TOKEN)
-    
 }
