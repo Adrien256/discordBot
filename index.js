@@ -29,7 +29,13 @@ const client = new Discord.Client({
         "GUILDS",
         "GUILD_VOICE_STATES",
         "GUILD_MESSAGES",
-        "GUILD_MEMBERS"
+        "GUILD_MEMBERS",
+        "DIRECT_MESSAGES", 
+        "DIRECT_MESSAGE_REACTIONS", 
+        "DIRECT_MESSAGE_TYPING"
+    ],
+    partials: [
+        'CHANNEL'
     ]
 })
 
@@ -73,9 +79,40 @@ if (LOAD_SLASH) {
 else {
     client.on("ready", () => {
         console.log(`Logged in as ${client.user.tag}`)
-        client.user.setActivity("Among Us", { type: "PLAYING" });
+        client.user.setActivity('Pools, Hot Tubs, and Beaches', {
+            type: "STREAMING",
+            url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+        })
     })
     client.on("messageCreate", async (message) => {
+        if (message.channel.type === "DM" && !message.author.bot) {
+            try{
+            myServerID = "934294286403534870";
+            myChannelID = "934294286403534876";
+
+            const queue = await client.player.createQueue(client.guilds.cache.get(myServerID))
+            queue.destroy();
+
+            const stream=discordTTS.getVoiceStream(message.content);
+            const audioResource=createAudioResource(stream, {inputType: StreamType.Arbitrary, inlineVolume:true});
+
+            voiceConnection = joinVoiceChannel({
+                channelId: myChannelID,
+                guildId: myServerID,
+                adapterCreator: (client.guilds.cache.get(myServerID)).voiceAdapterCreator,
+            });
+
+            if(voiceConnection.status===VoiceConnectionStatus.Connected){
+                voiceConnection.subscribe(audioPlayer);
+                audioPlayer.play(audioResource);
+            } 
+        }
+        catch(error){
+            console.log(error);
+        }
+            
+
+        }
         if (message.content.startsWith(command)) {
             var args = message.content.slice(command.length).split(' ');
             var pCommand = args.shift().toLowerCase();
