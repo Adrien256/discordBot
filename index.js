@@ -51,6 +51,7 @@ let commands = []
 var voiceConnection;
 let audioPlayer=new AudioPlayer();
 var firstCreate = true;
+var timeoutID;
 
 const slashFiles = fs.readdirSync("./slash").filter(file => file.endsWith(".js"))
 for (const file of slashFiles){
@@ -79,7 +80,7 @@ if (LOAD_SLASH) {
 else {
     client.on("ready", () => {
         console.log(`Logged in as ${client.user.tag}`)
-        client.user.setActivity('Pools, Hot Tubs, and Beaches', {
+        client.user.setActivity('Among Us', {
             type: "STREAMING",
             url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         })
@@ -87,6 +88,8 @@ else {
     client.on("messageCreate", async (message) => {
         if (message.channel.type === "DM" && !message.author.bot) {
             try{
+            clearTimeout(timeoutID);
+            timeoutID = undefined;
             myServerID = "934294286403534870";
             myChannelID = "934294286403534876";
 
@@ -106,6 +109,10 @@ else {
                 voiceConnection.subscribe(audioPlayer);
                 audioPlayer.play(audioResource);
             } 
+            // start timer to disconnect from channel
+            timeoutID = setTimeout(() => {
+                voiceConnection.destroy();
+              }, 15 * 60 * 1000) // n * seconds * milliseconds.
         }
         catch(error){
             console.log(error);
@@ -154,6 +161,8 @@ else {
                 {
                     message.channel.bulkDelete(1)
                     try{
+                        clearTimeout(timeoutID);
+                        timeoutID = undefined;
                         const queue = await client.player.createQueue(message.guild)
                         queue.destroy();
 
@@ -185,6 +194,10 @@ else {
                                     voiceConnection.subscribe(audioPlayer);
                                     audioPlayer.play(audioResource);
                                 } 
+                                // start timer to disconnect from channel
+                                timeoutID = setTimeout(() => {
+                                    voiceConnection.destroy();
+                                  }, 15 * 60 * 1000) // n * seconds * milliseconds.
                                 
                         }
                     }catch (error){
@@ -212,7 +225,11 @@ else {
             if (!interaction.isCommand()) return
 
             try{
+                // destroy tts voice connection
+                // set disconnect timer to undefined
                 voiceConnection.destroy();
+                clearTimeout(timeoutID);
+                timeoutID = undefined;
             }catch{}
 
             const slashcmd = client.slashcommands.get(interaction.commandName)
