@@ -5,9 +5,9 @@ const axios = require('axios')
 const { REST } = require("@discordjs/rest")
 const { Routes } = require("discord-api-types/v9")
 const fs = require("fs")
-const voice = require('@discordjs/voice');
-const discordTTS = require('discord-tts');
-const { Player } = require("discord-player");
+const voice = require('@discordjs/voice')
+const discordTTS = require('discord-tts')
+const { Player } = require("discord-player")
 const {AudioPlayer, createAudioPlayer, createAudioResource, StreamType, entersState, VoiceConnectionStatus, joinVoiceChannel} = require("@discordjs/voice");
 
 dotenv.config()
@@ -80,7 +80,7 @@ if (LOAD_SLASH) {
 else {
     client.on("ready", () => {
         console.log(`Logged in as ${client.user.tag}`)
-        client.user.setActivity('Among Us', {
+        client.user.setActivity('Pools, Hot Tubs, and Beaches', {
             type: "STREAMING",
             url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         })
@@ -205,6 +205,10 @@ else {
                     }
                 }
             }
+            else if (pCommand === "latency"){
+                const latencyCheck = message.channel.send("Checking latency...") 
+                message.channel.send(`Latency is ${(await latencyCheck).createdTimestamp - message.createdTimestamp}ms. API Latency is ${Math.round(client.ws.ping)}ms`)
+            }
             else if (pCommand === "bulkdeletebig"){
                 message.channel.bulkDelete(25)
                 .then(messages => console.log(`Bulk deleted ${messages.size} messages`))
@@ -214,6 +218,25 @@ else {
                 message.channel.bulkDelete(5)
                 .then(messages => console.log(`Bulk deleted ${messages.size} messages`))
                 .catch(console.error);
+            }
+            else if (pCommand === "join"){
+                if (!message.member.voice.channel) return message.reply('Please join a voice channel first!');
+                if ((message.member.voice.channel.members.filter((e) => client.user.id === e.user.id).size > 0)) return message.reply(`I'm already in your voice channel!`);
+
+                voiceConnection = joinVoiceChannel({
+                    channelId: message.member.voice.channelId,
+                    guildId: message.guildId,
+                    adapterCreator: message.guild.voiceAdapterCreator,
+                })
+                
+                
+
+                // start timer to disconnect from channel
+                timeoutID = setTimeout(() => {
+                    voiceConnection.destroy();
+                  }, 15 * 60 * 1000) // n * seconds * milliseconds.
+
+                
             }
         }
         else{
