@@ -9,6 +9,7 @@ const voice = require('@discordjs/voice')
 const discordTTS = require('discord-tts')
 const { Player } = require("discord-player")
 const {AudioPlayer, createAudioPlayer, createAudioResource, StreamType, entersState, VoiceConnectionStatus, joinVoiceChannel} = require("@discordjs/voice");
+const { addSpeechEvent } = require("discord-speech-recognition")
 
 dotenv.config()
 const TOKEN = process.env.TOKEN
@@ -38,6 +39,7 @@ const client = new Discord.Client({
         'CHANNEL'
     ]
 })
+addSpeechEvent(client)
 
 client.slashcommands = new Discord.Collection()
 client.player = new Player(client, {
@@ -80,7 +82,7 @@ if (LOAD_SLASH) {
 else {
     client.on("ready", () => {
         console.log(`Logged in as ${client.user.tag}`)
-        client.user.setActivity('Pools, Hot Tubs, and Beaches', {
+        client.user.setActivity('Among Us', {
             type: "STREAMING",
             url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
         })
@@ -229,8 +231,6 @@ else {
                     adapterCreator: message.guild.voiceAdapterCreator,
                 })
                 
-                
-
                 // start timer to disconnect from channel
                 timeoutID = setTimeout(() => {
                     voiceConnection.destroy();
@@ -242,6 +242,9 @@ else {
         else{
             return;
         }
+    })
+    client.on("speech", (message) => {
+        console.log(message.content);
     })
     client.on("interactionCreate", (interaction) => {
         async function handleCommand() {
